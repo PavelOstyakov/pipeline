@@ -2,9 +2,6 @@ import abc
 
 
 class MetricsCalculatorBase(abc.ABC):
-    def __init__(self):
-        pass
-
     @abc.abstractmethod
     def zero_cache(self):
         pass
@@ -19,9 +16,6 @@ class MetricsCalculatorBase(abc.ABC):
 
 
 class MetricsCalculatorEmpty(MetricsCalculatorBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-
     def zero_cache(self):
         pass
 
