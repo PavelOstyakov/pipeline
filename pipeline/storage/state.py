@@ -15,6 +15,10 @@ class StateStorageBase(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def remove_key(self, key: str):
+        pass
+
+    @abc.abstractmethod
     def set_value(self, key: str, value: object):
         pass
 
@@ -29,6 +33,9 @@ class StateStorageEmpty(StateStorageBase):
     def has_key(self, key: str):
         return False
 
+    def remove_key(self, key: str):
+        raise PipelineError("Key error: {}".format(key))
+
 
 class StateStorageFile(StateStorageBase):
     def __init__(self, path: str):
@@ -40,6 +47,10 @@ class StateStorageFile(StateStorageBase):
 
         with open(path, "rb") as fin:
             self._state = pickle.load(fin)
+
+    def _save(self):
+        with open(self._path, "wb") as fout:
+            pickle.dump(self._state, fout)
 
     def has_key(self, key: str):
         return key in self._state
@@ -53,5 +64,13 @@ class StateStorageFile(StateStorageBase):
     def set_value(self, key: str, value: object):
         self._state[key] = value
 
-        with open(self.path, "wb") as fout:
-            pickle.dump(self._state, fout)
+        self._save()
+
+    def remove_key(self, key: str):
+        if key not in self._state:
+            raise PipelineError("Key error: {}".format(key))
+
+        del self._state[key]
+
+        self._save()
+

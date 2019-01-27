@@ -1,4 +1,5 @@
 from .base import MetricsCalculatorBase
+from ..core import PipelineError
 
 from sklearn.metrics import accuracy_score
 
@@ -20,6 +21,9 @@ class MetricsCalculatorAccuracy(MetricsCalculatorBase):
         self._true_labels.append(y_true.cpu().data.numpy())
 
     def calculate(self):
+        if not self._predictions:
+            raise PipelineError("You need to add predictions for calculating the accuracy first")
+
         y_pred = np.concatenate(self._predictions)
         y_true = np.concatenate(self._true_labels)
 
