@@ -6,6 +6,10 @@ import torch.nn as nn
 import torch.optim as optim
 
 
+TRAIN_DATASET_PATH = "~/.pipeline/mnist/train.csv"
+TEST_DATASET_PATH = "~/.pipeline/mnist/test.csv"
+
+
 class ConfigMNISTBase(ConfigBase):
     def __init__(self, model):
         optimizer = optim.Adam(model.parameters())

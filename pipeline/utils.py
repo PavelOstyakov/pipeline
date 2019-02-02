@@ -1,5 +1,6 @@
 import importlib
 import torch
+import os
 
 
 def load_config(config_path: str):
@@ -16,3 +17,7 @@ def move_to_device(tensor: list or tuple or torch.Tensor, device: str):
     if isinstance(tensor, tuple):
         return (move_to_device(elem, device=device) for elem in tensor)
     return tensor.to(device)
+
+
+def get_path(path):
+    return os.path.expanduser(path)
