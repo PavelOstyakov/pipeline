@@ -42,6 +42,7 @@ class StateStorageFile(StateStorageBase):
         self._path = path
 
         if not os.path.exists(path):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "wb") as fout:
                 pickle.dump({}, fout)
 

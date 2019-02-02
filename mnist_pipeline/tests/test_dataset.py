@@ -19,7 +19,7 @@ class TestMNISTDataset:
 
         assert 0 <= target < 10
 
-        assert image.shape == (1, 28, 28)
+        assert image.shape == (28, 28, 1)
 
     def test_val_dataset(self):
         dataset = MNISTDataset(TRAIN_DATASET_PATH, mode=MNISTDataset.MODE_VAL, val_ratio=0.2)
@@ -30,7 +30,7 @@ class TestMNISTDataset:
 
         assert 0 <= target < 10
 
-        assert image.shape == (1, 28, 28)
+        assert image.shape == (28, 28, 1)
 
         dataset = MNISTDataset(TRAIN_DATASET_PATH, mode=MNISTDataset.MODE_VAL, val_ratio=0)
         assert len(dataset) == 0
@@ -39,7 +39,7 @@ class TestMNISTDataset:
         dataset = MNISTImagesDataset(TRAIN_DATASET_PATH, mode=MNISTDataset.MODE_VAL, val_ratio=1)
 
         image = dataset[10]
-        assert image.shape == (1, 28, 28)
+        assert image.shape == (28, 28, 1)
 
         assert image.min() >= 0
         assert 1 <= image.max() <= 255

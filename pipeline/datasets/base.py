@@ -57,3 +57,15 @@ class MultiLabelTargetsDataset(data.Dataset):
             result[class_id] = 1
 
         return result
+
+
+class DatasetWithPostprocessingFunc(data.Dataset):
+    def __init__(self, dataset, postprocessing_func):
+        self._dataset = dataset
+        self._postprocessing_func = postprocessing_func
+
+    def __len__(self):
+        return len(self._dataset)
+
+    def __getitem__(self, item):
+        return self._postprocessing_func(self._dataset[item])

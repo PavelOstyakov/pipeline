@@ -27,7 +27,11 @@ class MetricsCalculatorAccuracy(MetricsCalculatorBase):
         y_pred = np.concatenate(self._predictions)
         y_true = np.concatenate(self._true_labels)
 
-        y_pred = (y_pred >= self._border).astype("int")
+        if y_pred.shape[-1] == 1:
+            # Binary classification
+            y_pred = (y_pred >= self._border).astype("int")
+        else:
+            y_pred = np.argmax(y_pred, -1)
 
         result = accuracy_score(y_true, y_pred)
         return {"accuracy": result}

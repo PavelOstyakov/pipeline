@@ -10,7 +10,9 @@ from ..logger import LOGGER
 from ..metrics.base import MetricsCalculatorBase
 from ..schedulers.base import SchedulerWrapperMetricsMeanBase, SchedulerWrapperBase
 from ..storage.state import StateStorageBase
-from ..utils import move_to_device
+from ..utils import move_to_device, save_model, load_model
+
+import os
 
 
 class TrainerBase:
@@ -18,26 +20,28 @@ class TrainerBase:
             self,
             model: nn.Module,
             train_data_loader: Iterable,
-            validation_data_loader: Iterable,
+            val_data_loader: Iterable,
             epoch_count: int,
             optimizer: Optimizer,
             scheduler: SchedulerWrapperBase,
-            loss_calculator: nn.Module,
-            metric_calculator: MetricsCalculatorBase,
+            loss: nn.Module,
+            metrics_calculator: MetricsCalculatorBase,
             print_frequency: None or int,
             device: str,
+            model_save_path: str,
             state_storage: StateStorageBase) -> None:
 
         self.model = model.to(device)
         self.train_data_loader = train_data_loader
-        self.validation_data_loader = validation_data_loader
+        self.val_data_loader = val_data_loader
         self.epoch_count = epoch_count
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.loss_calculator = loss_calculator
-        self.metric_calculator = metric_calculator
+        self.loss = loss
+        self.metrics_calculator = metrics_calculator
         self.print_frequency = print_frequency
         self.device = device
+        self.model_save_path = model_save_path
         self.state_storage = state_storage
 
     def train_step(self, input_data: torch.Tensor, target: torch.Tensor):
@@ -47,7 +51,7 @@ class TrainerBase:
         model_output = self.model(input_data)
 
         self.optimizer.zero_grad()
-        loss = self.loss_calculator(model_output, target)
+        loss = self.loss(model_output, target)
 
         loss.backward()
         self.optimizer.step(closure=None)
@@ -112,26 +116,26 @@ class TrainerBase:
     def run_validation_epoch(self, epoch_id: int):
         self.model.eval()
 
-        self.metric_calculator.zero_cache()
+        self.metrics_calculator.zero_cache()
         mean_loss = 0
         step_count = 0
         start_time = time.time()
 
         with torch.no_grad():
-            for step_id, (input_data, target) in enumerate(self.validation_data_loader):
+            for step_id, (input_data, target) in enumerate(self.val_data_loader):
                 model_output = self.predict_step(input_data)
 
-                loss = self.loss_calculator(model_output, target)
+                loss = self.loss(model_output, target)
                 mean_loss += loss
                 step_count += 1
                 epoch_time = time.time() - start_time
 
-                self.metric_calculator.add(model_output, target)
+                self.metrics_calculator.add(model_output, target)
                 self.log_validation_step(epoch_id, step_id, epoch_time, loss, mean_loss / step_count)
 
         epoch_time = time.time() - start_time
         mean_loss /= max(step_count, 1)
-        metrics = self.metric_calculator.calculate()
+        metrics = self.metrics_calculator.calculate()
 
         self.log_validation_epoch(epoch_id, epoch_time, mean_loss, metrics)
 
@@ -155,6 +159,25 @@ class TrainerBase:
 
         self.state_storage.set_value("learning_rates", learning_rates)
 
+    def save_last_model(self, epoch_id):
+        os.makedirs(self.model_save_path, exist_ok=True)
+        model_path = os.path.join(self.model_save_path, "epoch_{}".format(epoch_id))
+        save_model(self.model, model_path)
+        LOGGER.info("Model was saved in {}".format(model_path))
+
+    def load_last_model(self):
+        if os.path.exists(self.model_save_path):
+            epochs = filter(lambda file: file.startswith("epoch_"), os.listdir(self.model_save_path))
+            epochs = map(lambda file: int(file[file.find("_") + 1]), epochs)
+            epochs = list(epochs)
+
+            if epochs:
+                last_model_path = os.path.join(self.model_save_path, "epoch_{}".format(max(epochs)))
+                load_model(self.model, last_model_path)
+                return
+
+        LOGGER.info("Model not found in {}. Starting to train a model from scratch...".format(self.model_save_path))
+
     def run(self):
         start_epoch_id = 0
 
@@ -162,11 +185,13 @@ class TrainerBase:
             start_epoch_id = self.state_storage.get_value("start_epoch_id")
 
         self.load_optimizer_state()
+        self.load_last_model()
 
-        for epoch_id in range(start_epoch_id, self.epoch_count):
+        epoch_id = start_epoch_id
+        while self.epoch_count is None or epoch_id < self.epoch_count:
             _, mean_train_loss = self.run_train_epoch(epoch_id)
 
-            if self.validation_data_loader is None:
+            if self.val_data_loader is None:
                 if isinstance(self.scheduler, SchedulerWrapperMetricsMeanBase):
                     raise PipelineError("You can't use a scheduler based on metrics without validation data")
                 self.scheduler.step(mean_train_loss, {}, epoch_id)
@@ -177,3 +202,6 @@ class TrainerBase:
 
             self.state_storage.set_value("start_epoch_id", epoch_id + 1)
             self.save_optimizer_state()
+            self.save_last_model(epoch_id)
+
+            epoch_id += 1

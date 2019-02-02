@@ -32,7 +32,7 @@ class MNISTDataset(data.Dataset):
     def __getitem__(self, item):
         row = self._dataset[item]
 
-        image = row[1:].reshape(1, 28, 28)
+        image = row[1:].reshape(28, 28, 1).astype("uint8")
         target = int(row[0])
         return image, target
 
