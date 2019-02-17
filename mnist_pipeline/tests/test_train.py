@@ -1,6 +1,6 @@
-from mnist_pipeline.configs.simple_cnn import Config
+from mnist_pipeline.configs.simple_cnn import Config, PredictConfig
 
-from pipeline.utils import run_train
+from pipeline.utils import run_train, run_predict
 import tempfile
 import shutil
 import os
@@ -30,5 +30,11 @@ class TestMNISTTrain:
 
         assert model_checkpoint_hash == new_model_checkpoint_hash
         assert not os.path.exists(os.path.join(test_path, "epoch_2"))
+
+        predict_config = PredictConfig(model_save_path=test_path)
+        run_predict(predict_config)
+
+        assert os.path.exists(os.path.join(test_path, "predictions", "predictions"))
+        assert os.path.exists(os.path.join(test_path, "predictions", "identifiers"))
 
         shutil.rmtree(test_path)

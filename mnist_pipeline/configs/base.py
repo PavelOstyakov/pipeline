@@ -1,10 +1,11 @@
 from mnist_pipeline.dataset import MNISTImagesDataset, MNISTTargetsDataset
 
-from pipeline.config_base import ConfigBase
+from pipeline.config_base import ConfigBase, PredictConfigBase
 from pipeline.schedulers.reduce_on_plateau import SchedulerWrapperLossOnPlateau
 from pipeline.metrics.accuracy import MetricsCalculatorAccuracy
 from pipeline.datasets.base import DatasetWithPostprocessingFunc, DatasetComposer
 from pipeline.trainers.classification import TrainerClassification
+from pipeline.predictors.classification import PredictorClassification
 
 import torch.nn as nn
 import torch.optim as optim
@@ -55,3 +56,22 @@ class ConfigMNISTBase(ConfigBase):
             train_dataset=train_dataset,
             val_dataset=val_dataset,
             trainer_cls=trainer_cls)
+
+
+class PredictConfigMNISTBase(PredictConfigBase):
+    def __init__(self, model, model_save_path, num_workers=4, batch_size=128):
+        predictor_cls = PredictorClassification
+
+        images_dataset = DatasetWithPostprocessingFunc(
+            MNISTImagesDataset(path=TRAIN_DATASET_PATH, mode=MNISTImagesDataset.MODE_VAL, val_ratio=VAL_RATIO),
+            ToTensor())
+
+        dataset = DatasetComposer([images_dataset, list(range(len(images_dataset)))])
+
+        super().__init__(
+            model=model,
+            model_save_path=model_save_path,
+            dataset=dataset,
+            predictor_cls=predictor_cls,
+            num_workers=num_workers,
+            batch_size=batch_size)

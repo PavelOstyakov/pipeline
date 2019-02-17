@@ -8,12 +8,24 @@ import torch
 import os
 
 
-def load_config(config_path: str):
-    module = importlib.import_module(config_path)
-    assert module.hasattr("Config"), "Config file should contain Config class"
+def _load_cls(module_path, cls_name):
+    module_path_fixed = module_path
+    if module_path_fixed.endswith(".py"):
+        module_path_fixed = module_path_fixed[:-3]
+    module_path_fixed = module_path_fixed.replace("/", ".")
+    module = importlib.import_module(module_path_fixed)
+    assert hasattr(module, cls_name), "{} file should contain {} class".format(module_path, cls_name)
 
-    config = module.Config()
-    return config
+    cls = getattr(module, cls_name)
+    return cls
+
+
+def load_config(config_path: str):
+    return _load_cls(config_path, "Config")()
+
+
+def load_predict_config(config_path: str):
+    return _load_cls(config_path, "PredictConfig")()
 
 
 def move_to_device(tensor: list or tuple or torch.Tensor, device: str):
@@ -81,3 +93,30 @@ def run_train(config):
     )
 
     trainer.run()
+
+
+def run_predict(config):
+    data_loader = DataLoader(
+        config.dataset,
+        batch_size=config.batch_size,
+        shuffle=False,
+        pin_memory=True,
+        num_workers=config.num_workers)
+
+    model = config.model
+
+    model_save_path = config.model_save_path
+    assert os.path.exists(model_save_path), "{} does not exist".format(model_save_path)
+
+    logger_path = os.path.join(model_save_path, "log_predict.txt")
+    setup_logger(out_file=logger_path)
+
+    predictor = config.predictor_cls(
+        model=model,
+        data_loader=data_loader,
+        print_frequency=config.print_frequency,
+        device=config.device,
+        model_save_path=model_save_path,
+        predictions_storage=config.predictions_storage)
+
+    predictor.run()

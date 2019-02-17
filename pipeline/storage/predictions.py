@@ -3,6 +3,7 @@ from ..core import PipelineError
 import abc
 import torch
 import os
+import itertools
 
 
 class PredictionsStorageBase(abc.ABC):
@@ -52,7 +53,8 @@ class PredictionsStorageFiles(PredictionsStorageBase):
 
         self._identifier_to_element_id = {}
 
-        self._load_predictions()
+        if os.path.exists(os.path.join(self._path, "identifiers")):
+            self._load_predictions()
 
     def _load_predictions(self):
         self._identifiers = torch.load(os.path.join(self._path, "identifiers"))
@@ -89,3 +91,8 @@ class PredictionsStorageFiles(PredictionsStorageBase):
 
         element_id = self._identifier_to_element_id[identifier]
         return self._predictions[element_id]
+
+    def sort_by_id(self):
+        result = sorted(zip(self._identifiers, self._predictions), key=lambda x: x[0])
+        self._identifiers, self._predictions = list(zip(*result))
+        self.flush()

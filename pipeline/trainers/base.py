@@ -141,18 +141,16 @@ class TrainerBase:
 
         return epoch_time, mean_loss, metrics
 
-    def load_optimizer_state(self) -> bool:
+    def load_optimizer_state(self):
         if not self.state_storage.has_key("learning_rates"):
-            return False
+            return
 
         learning_rates = self.state_storage.get_value("learning_rates")
 
         for learning_rate, param_group in zip(learning_rates, self.optimizer.param_groups):
             param_group["lr"] = learning_rate
 
-        return True
-
-    def save_optimizer_state(self) -> None:
+    def save_optimizer_state(self):
         learning_rates = []
         for param_group in self.optimizer.param_groups:
             learning_rates.append(float(param_group['lr']))
@@ -165,27 +163,20 @@ class TrainerBase:
         save_model(self.model, model_path)
         LOGGER.info("Model was saved in {}".format(model_path))
 
-    def load_last_model(self):
-        if os.path.exists(self.model_save_path):
-            epochs = filter(lambda file: file.startswith("epoch_"), os.listdir(self.model_save_path))
-            epochs = map(lambda file: int(file[file.find("_") + 1]), epochs)
-            epochs = list(epochs)
-
-            if epochs:
-                last_model_path = os.path.join(self.model_save_path, "epoch_{}".format(max(epochs)))
-                load_model(self.model, last_model_path)
-                return
-
-        LOGGER.info("Model not found in {}. Starting to train a model from scratch...".format(self.model_save_path))
+    def load_last_model(self, epoch_id):
+        last_model_path = os.path.join(self.model_save_path, "epoch_{}".format(epoch_id))
+        load_model(self.model, last_model_path)
 
     def run(self):
         start_epoch_id = 0
 
         if self.state_storage.has_key("start_epoch_id"):
             start_epoch_id = self.state_storage.get_value("start_epoch_id")
+            self.load_last_model(start_epoch_id - 1)
+        else:
+            LOGGER.info("Model not found in {}. Starting to train a model from scratch...".format(self.model_save_path))
 
         self.load_optimizer_state()
-        self.load_last_model()
 
         epoch_id = start_epoch_id
         while self.epoch_count is None or epoch_id < self.epoch_count:
