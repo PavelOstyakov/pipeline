@@ -1,0 +1,16 @@
+dist: xenial
+language: python
+python:
+  - "3.6"
+# command to install dependencies
+install:
+  - pip install -r requirements.txt
+  - wget https://www.dropbox.com/s/pzljfuwzo8hpb18/mnist.zip?dl=0 -O mnist.zip
+  - mkdir ~/.pipeline
+  - mkdir ~/.pipeline/mnist
+  - unzip mnist.zip -d ~/.pipeline/mnist/
+  - free -g
+# command to run tests
+script:
+  - pytest -vsx
+ 
