@@ -3,7 +3,6 @@ from ..core import PipelineError
 import abc
 import torch
 import os
-import itertools
 
 
 class PredictionsStorageBase(abc.ABC):

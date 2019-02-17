@@ -1,4 +1,4 @@
-from pipeline.schedulers.reduce_on_plateau import SchedulerWrapperLossOnPlateau, SchedulerWrapperMetricsMeanOnPlateau
+from pipeline.schedulers.learning_rate.reduce_on_plateau import SchedulerWrapperLossOnPlateau, SchedulerWrapperMetricsMeanOnPlateau
 
 from torch.optim import Adam
 import torch.nn as nn

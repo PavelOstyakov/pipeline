@@ -1,7 +1,7 @@
 from mnist_pipeline.dataset import MNISTImagesDataset, MNISTTargetsDataset
 
 from pipeline.config_base import ConfigBase, PredictConfigBase
-from pipeline.schedulers.reduce_on_plateau import SchedulerWrapperLossOnPlateau
+from pipeline.schedulers.learning_rate.reduce_on_plateau import SchedulerWrapperLossOnPlateau
 from pipeline.metrics.accuracy import MetricsCalculatorAccuracy
 from pipeline.datasets.base import DatasetWithPostprocessingFunc, DatasetComposer
 from pipeline.trainers.classification import TrainerClassification

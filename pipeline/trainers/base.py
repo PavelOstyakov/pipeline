@@ -8,7 +8,7 @@ from torch.optim import Optimizer
 from ..core import PipelineError
 from ..logger import LOGGER
 from ..metrics.base import MetricsCalculatorBase
-from ..schedulers.base import SchedulerWrapperMetricsMeanBase, SchedulerWrapperBase
+from pipeline.schedulers.base import SchedulerWrapperMetricsMeanBase, SchedulerWrapperBase
 from ..storage.state import StateStorageBase
 from ..utils import move_to_device, save_model, load_model
 

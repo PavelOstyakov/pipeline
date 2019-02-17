@@ -1,6 +1,6 @@
 from .datasets.base import EmptyDataset
 from .metrics.base import MetricsCalculatorEmpty
-from .schedulers.base import SchedulerWrapperIdentity
+from pipeline.schedulers.base import SchedulerWrapperIdentity
 from .storage.state import StateStorageFile
 from .storage.predictions import PredictionsStorageFiles
 

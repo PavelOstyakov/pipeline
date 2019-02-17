@@ -1,13 +1,15 @@
 import abc
 
 
-class SchedulerWrapperBase(abc.ABC):
-    def __init__(self, scheduler):
-        self._scheduler = scheduler
-
+class SchedulerBase(abc.ABC):
     @abc.abstractmethod
     def step(self, loss, metrics, epoch_id):
         pass
+
+
+class SchedulerWrapperBase(SchedulerBase):
+    def __init__(self, scheduler):
+        self._scheduler = scheduler
 
 
 class SchedulerWrapperIdentity(SchedulerWrapperBase):

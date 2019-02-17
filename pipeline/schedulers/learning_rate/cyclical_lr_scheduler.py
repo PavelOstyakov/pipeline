@@ -1,4 +1,4 @@
-from .base import SchedulerWrapperLossBase, SchedulerWrapperMetricsMeanBase
+from ..base import SchedulerWrapperLossBase, SchedulerWrapperMetricsMeanBase
 
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
