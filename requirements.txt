@@ -3,3 +3,4 @@ pandas
 numpy
 torchvision
 scikit-learn
+Pillow

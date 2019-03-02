@@ -123,6 +123,7 @@ class TrainerBase:
 
         with torch.no_grad():
             for step_id, (input_data, target) in enumerate(self.val_data_loader):
+                target = move_to_device(target, device=self.device)
                 model_output = self.predict_step(input_data)
 
                 loss = self.loss(model_output, target)
