@@ -1,6 +1,13 @@
-# pipeline
+# Pipeline
 
-The purpose of this library is to build a deep learning pipeline to win Kaggle competition in one click.
-It's as simple as than, no coding, just magic !
+## How to run training
 
-MNIST link: https://www.dropbox.com/s/pzljfuwzo8hpb18/mnist.zip?dl=0
+First of all, create a config. You may find some examples of configs in folders mnist_pipeline, cifar_pipeline and imagenet_pipeline.
+Then, call:
+
+`python3 bin/train.py path_to_config`
+
+
+For example, for reproducing results from Fixup paper (actually, they are not reproducible) just call:
+
+`python3 bin/train.py cifar_pipeline/configs/resnet110_fixup.py`
