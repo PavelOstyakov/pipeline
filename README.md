@@ -8,6 +8,6 @@ Then, call:
 `python3 bin/train.py path_to_config`
 
 
-For example, for reproducing results from Fixup paper (actually, they are not reproducible) just call:
+For example, for reproducing results from Fixup paper just call:
 
 `python3 bin/train.py cifar_pipeline/configs/resnet110_fixup.py`
