@@ -54,6 +54,7 @@ class TrainerBase:
         loss = self.loss(model_output, target)
 
         loss.backward()
+
         self.optimizer.step(closure=None)
 
         return loss.cpu().data.numpy()

@@ -33,5 +33,8 @@ class MetricsCalculatorAccuracy(MetricsCalculatorBase):
         else:
             y_pred = np.argmax(y_pred, -1)
 
+        if len(y_true.shape) != 1:
+            y_true = np.argmax(y_true, -1)
+
         result = accuracy_score(y_true, y_pred)
         return {"accuracy": result}

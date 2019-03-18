@@ -28,8 +28,8 @@ class BasicBlock(nn.Module):
         self.conv_res = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, padding=0, bias=False)
         self.conv_res = not self.equalInOut and self.conv_res or None
 
-        self.multiplicator = nn.Parameter(torch.ones(1,1,1,1))
-        self.biases = nn.ParameterList([nn.Parameter(torch.zeros(1,1,1,1))] * 4)
+        self.scale = nn.Parameter(torch.ones(1))
+        self.biases = nn.ParameterList([nn.Parameter(torch.zeros(1)) for _ in range(4)])
 
         k = self.conv1.kernel_size[0] * self.conv1.kernel_size[1] * self.conv1.out_channels
         self.conv1.weight.data.normal_(0, fixup_coeff * fixup_l ** (-1 / (2 * self.m - 2)) * math.sqrt(2. / k))
@@ -45,7 +45,7 @@ class BasicBlock(nn.Module):
         out = self.relu(out) + self.biases[2]
         if self._dropout > 0:
             out = F.dropout(out, p=self._dropout, training=self.training)
-        out = self.multiplicator * self.conv2(out) + self.biases[3]
+        out = self.scale * self.conv2(out) + self.biases[3]
 
         if self.equalInOut:
             return torch.add(x, out)
@@ -103,8 +103,11 @@ class WideResNet(nn.Module):
         k = self.conv1.kernel_size[0] * self.conv1.kernel_size[1] * self.conv1.out_channels
         self.conv1.weight.data.normal_(0, math.sqrt(2. / k))
 
+        self.bias1 = nn.Parameter(torch.zeros(1))
+        self.bias2 = nn.Parameter(torch.zeros(1))
+
     def forward(self, x):
-        out = self.conv1(x)
+        out = self.conv1(x) + self.bias1
         out = self.block1(out)
         out = self.block2(out)
         out = self.block3(out)
@@ -112,4 +115,4 @@ class WideResNet(nn.Module):
         out = self.relu(out)
         out = F.adaptive_avg_pool2d(out, 1)
         out = out.view(-1, self.nChannels)
-        return self.fc(out)
+        return self.fc(out + self.bias2)

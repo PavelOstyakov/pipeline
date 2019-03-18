@@ -17,8 +17,8 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
         self.stride = stride
 
-        self.multiplicator = nn.Parameter(torch.ones(1, 1, 1, 1))
-        self.biases = nn.ParameterList([nn.Parameter(torch.zeros(1, 1, 1, 1)) for _ in range(6)])
+        self.scale = nn.Parameter(torch.ones(1))
+        self.biases = nn.ParameterList([nn.Parameter(torch.zeros(1)) for _ in range(6)])
 
         k = self.conv1.kernel_size[0] * self.conv1.kernel_size[1] * self.conv1.out_channels
         self.conv1.weight.data.normal_(0, fixup_l ** (-1 / (2 * self.m - 2)) * math.sqrt(2. / k))
@@ -40,7 +40,7 @@ class Bottleneck(nn.Module):
         out = self.conv2(out + self.biases[2])
         out = self.relu(out + self.biases[3])
 
-        out = self.multiplicator * self.conv3(out + self.biases[4]) + self.biases[5]
+        out = self.scale * self.conv3(out + self.biases[4]) + self.biases[5]
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -57,7 +57,7 @@ class ResNet(nn.Module):
         self.inplanes = 64
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv2d(input_channels, 64, kernel_size=7, stride=2, padding=3,
-                               bias=True)
+                               bias=False)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         fixup_l = sum(layers)
@@ -66,6 +66,8 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2, fixup_l=fixup_l)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2, fixup_l=fixup_l)
         self.avgpool = nn.AvgPool2d(7, stride=1)
+        self.bias1 = nn.Parameter(torch.zeros(1))
+        self.bias2 = nn.Parameter(torch.zeros(1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         self.fc.weight.data.zero_()
@@ -90,7 +92,7 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         x = self.conv1(x)
-        x = self.relu(x)
+        x = self.relu(x + self.bias1)
         x = self.maxpool(x)
 
         x = self.layer1(x)
@@ -100,7 +102,7 @@ class ResNet(nn.Module):
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        x = self.fc(x + self.bias2)
 
         return x
 

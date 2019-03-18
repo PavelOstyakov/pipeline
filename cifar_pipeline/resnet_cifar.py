@@ -40,8 +40,8 @@ class BasicBlock(nn.Module):
                                         F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes//4, planes//4), "constant", 0))
 
         if use_fixup:
-            self.multiplicator = nn.Parameter(torch.ones(1, 1, 1, 1))
-            self.biases = nn.ParameterList([nn.Parameter(torch.zeros(1, 1, 1, 1))] * 4)
+            self.scale = nn.Parameter(torch.ones(1))
+            self.biases = nn.ParameterList([nn.Parameter(torch.zeros(1)) for _ in range(4)])
 
             k = self.conv1.kernel_size[0] * self.conv1.kernel_size[1] * self.conv1.out_channels
             self.conv1.weight.data.normal_(0, fixup_coeff * fixup_l ** (-1 / (2 * self.m - 2)) * math.sqrt(2. / k))
@@ -50,7 +50,7 @@ class BasicBlock(nn.Module):
     def forward(self, x):
         if self._use_fixup:
             out = F.relu(self.conv1(x + self.biases[0]) + self.biases[1])
-            out = self.multiplicator * self.conv2(out + self.biases[2]) + self.biases[3]
+            out = self.scale * self.conv2(out + self.biases[2]) + self.biases[3]
         else:
             out = F.relu(self.bn1(self.conv1(x)))
             out = self.bn2(self.conv2(out))
@@ -76,6 +76,8 @@ class ResNet(nn.Module):
                                        use_fixup=use_fixup, fixup_l=fixup_l, fixup_coeff=fixup_coeff)
         self.linear = nn.Linear(64, num_classes)
 
+        self.bias1 = nn.Parameter(torch.zeros(1))
+        self.bias2 = nn.Parameter(torch.zeros(1))
         if not use_fixup:
             self.apply(_weights_init)
         else:
@@ -95,13 +97,13 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn1(self.conv1(x)) + self.bias1)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = F.avg_pool2d(out, out.size()[3])
         out = out.view(out.size(0), -1)
-        out = self.linear(out)
+        out = self.linear(out + self.bias2)
         return out
 
 
