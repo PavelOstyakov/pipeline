@@ -34,7 +34,7 @@ class ConfigMNISTBase(ConfigBase):
     def __init__(self, model, model_save_path, num_workers=4, batch_size=128, transforms=None):
         optimizer = optim.Adam(model.parameters())
         scheduler = SchedulerWrapperLossOnPlateau(optimizer)
-        loss = nn.CrossEntropyLoss()
+        loss = nn.MSELoss()
         metrics_calculator = MetricsCalculatorAccuracy()
         trainer_cls = TrainerClassification
 

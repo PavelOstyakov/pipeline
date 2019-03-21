@@ -6,6 +6,7 @@ from enum import auto
 
 import os
 import pandas as pd
+import torch
 
 
 class MNISTDataset(data.Dataset):
@@ -33,7 +34,7 @@ class MNISTDataset(data.Dataset):
         row = self._dataset[item]
 
         image = row[1:].reshape(28, 28, 1).astype("uint8")
-        target = int(row[0])
+        target = torch.Tensor([float(row[0])]).float()
         return image, target
 
 

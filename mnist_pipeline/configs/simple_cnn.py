@@ -22,7 +22,7 @@ def get_model():
         nn.ReLU(),
         nn.AdaptiveAvgPool2d(1),
         Flatten(),
-        nn.Linear(128, 10)
+        nn.Linear(128, 1)
     )
     return model
 
