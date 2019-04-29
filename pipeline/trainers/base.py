@@ -174,7 +174,10 @@ class TrainerBase:
 
         if self.state_storage.has_key("start_epoch_id"):
             start_epoch_id = self.state_storage.get_value("start_epoch_id")
-            self.load_last_model(start_epoch_id - 1)
+            try:
+                self.load_last_model(start_epoch_id - 1)
+            except:
+                LOGGER.exception("Exception occurs during loading a model. Starting to train a model from scratch...")
         else:
             LOGGER.info("Model not found in {}. Starting to train a model from scratch...".format(self.model_save_path))
 
